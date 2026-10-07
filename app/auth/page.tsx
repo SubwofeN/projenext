@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function AuthPage() {
@@ -11,7 +10,6 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +26,14 @@ export default function AuthPage() {
 
         if (error) {
           setMessage({ text: error.message, type: 'error' });
+          setLoading(false);
         } else if (data?.user) {
-          setMessage({ text: 'Giriş başarılı! Yönlendiriliyorsunuz...', type: 'success' });
+          setMessage({ text: 'Giriş başarılı! Ana sayfaya aktarılıyorsunuz...', type: 'success' });
+          
+          // Next router yerine sert tarayıcı yönlendirmesi (Kesin çözüm)
           setTimeout(() => {
-            router.push('/');
-            router.refresh();
-          }, 800);
+            window.location.href = '/';
+          }, 400);
         }
       } else {
         // Kayıt Ol
@@ -44,6 +44,7 @@ export default function AuthPage() {
 
         if (error) {
           setMessage({ text: error.message, type: 'error' });
+          setLoading(false);
         } else if (data?.user) {
           setMessage({
             text: 'Kayıt başarılı! Şimdi aynı bilgilerle giriş yapabilirsiniz.',
@@ -51,11 +52,11 @@ export default function AuthPage() {
           });
           setIsLogin(true);
           setPassword('');
+          setLoading(false);
         }
       }
     } catch (err: any) {
       setMessage({ text: err.message || 'Beklenmeyen bir hata oluştu.', type: 'error' });
-    } finally {
       setLoading(false);
     }
   };
@@ -68,7 +69,6 @@ export default function AuthPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900/60 p-8 backdrop-blur-2xl shadow-2xl">
-        {/* Başlık ve Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center font-black text-black shadow-lg shadow-cyan-500/20">
@@ -83,12 +83,11 @@ export default function AuthPage() {
           </h2>
           <p className="text-xs text-zinc-400 mt-1">
             {isLogin
-              ? 'Projeleri keşfetmek ve yönetmek için giriş yapın.'
+              ? 'Projeleri yönetmek için hesabınıza erişin.'
               : 'Ekosisteme katılmak için bilgilerinizi girin.'}
           </p>
         </div>
 
-        {/* Form Alanı */}
         <form onSubmit={handleAuth} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">
@@ -122,7 +121,7 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:opacity-95 transition disabled:opacity-50 mt-2"
+            className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:opacity-95 transition disabled:opacity-50 mt-2 cursor-pointer"
           >
             {loading ? (
               <span className="inline-flex items-center gap-2">
@@ -137,7 +136,6 @@ export default function AuthPage() {
           </button>
         </form>
 
-        {/* Geri Bildirim Mesajı */}
         {message && (
           <div
             className={`mt-4 p-3 rounded-xl border text-xs text-center ${
@@ -150,7 +148,6 @@ export default function AuthPage() {
           </div>
         )}
 
-        {/* Geçiş Butonu */}
         <div className="mt-6 pt-5 border-t border-white/5 text-center">
           <button
             type="button"
@@ -158,7 +155,7 @@ export default function AuthPage() {
               setIsLogin(!isLogin);
               setMessage(null);
             }}
-            className="text-xs text-zinc-400 hover:text-cyan-300 transition"
+            className="text-xs text-zinc-400 hover:text-cyan-300 transition cursor-pointer"
           >
             {isLogin
               ? 'Hesabınız yok mu? '

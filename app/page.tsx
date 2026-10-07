@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import ProjectCard from '@/components/ProjectCard';
+import NewProjectModal from '@/components/NewProjectModal';
 import Link from 'next/link';
 
 const ADMIN_EMAIL = 'yilmaznecati728@gmail.com';
@@ -13,6 +14,7 @@ export default function Home() {
   const [adminModeActive, setAdminModeActive] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchProjects = async () => {
     const { data, error } = await supabase
@@ -75,6 +77,21 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
+            {/* Proje Ekle Butonu */}
+            <button
+              onClick={() => {
+                if (!currentUser) {
+                  window.location.href = '/auth';
+                } else {
+                  setIsModalOpen(true);
+                }
+              }}
+              type="button"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 hover:opacity-95 transition cursor-pointer"
+            >
+              <span className="text-sm font-bold">+</span> Yeni Proje Ekle
+            </button>
+
             {/* Yönetici Toggle Butonu */}
             {isAdminUser && (
               <button
@@ -111,9 +128,9 @@ export default function Home() {
             ) : (
               <Link
                 href="/auth"
-                className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 hover:opacity-95 transition"
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-zinc-300 hover:bg-white/10 hover:text-white transition"
               >
-                Giriş Yap / Kayıt Ol
+                Giriş Yap
               </Link>
             )}
           </div>
@@ -132,7 +149,7 @@ export default function Home() {
             </span>
           </h2>
           <p className="max-w-xl mx-auto text-sm sm:text-base text-zinc-400">
-            Açık kaynak fikirler, modern projeler ve öğrenci ekosisteminin ürettiği tüm yenilikler tek bir merkezde.
+            Açık kaynak fikirler, modern projeler ve topluluğun ürettiği tüm yenilikler tek bir merkezde.
           </p>
         </section>
 
@@ -159,6 +176,19 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* PROJE OLUŞTURMA MODALI */}
+      {/* PROJE OLUŞTURMA MODALI */}
+      {isModalOpen && (
+        <NewProjectModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onProjectAdded={() => {
+            setIsModalOpen(false);
+            fetchProjects();
+          }}
+        />
+      )}
     </div>
   );
 }

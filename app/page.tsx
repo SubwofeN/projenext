@@ -9,7 +9,8 @@ const ADMIN_EMAIL = 'yilmaznecati728@gmail.com';
 
 export default function Home() {
   const [projects, setProjects] = useState<any[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [adminModeActive, setAdminModeActive] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +37,7 @@ export default function Home() {
         user?.email &&
         user.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim()
       ) {
-        setIsAdmin(true);
+        setIsAdminUser(true);
       }
 
       await fetchProjects();
@@ -49,19 +50,35 @@ export default function Home() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setCurrentUser(null);
-    setIsAdmin(false);
+    setIsAdminUser(false);
+    setAdminModeActive(false);
   };
 
   return (
     <main className="min-h-screen bg-black text-white p-6 sm:p-12 max-w-6xl mx-auto">
       {/* ÜST BAR */}
-      <header className="flex justify-between items-center pb-8 border-b border-zinc-800 mb-8">
-        <div>
+      <header className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-8 border-b border-zinc-800 mb-8">
+        <div className="flex items-center gap-3">
           <h1 className="text-3xl font-extrabold tracking-tight">ProjeNext</h1>
-          {isAdmin && (
-            <span className="inline-block mt-2 text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-medium">
-              Admin Modu Aktif
-            </span>
+
+          {/* TIKLANABİLİR AÇ/KAPA BUTONU */}
+          {isAdminUser && (
+            <button
+              onClick={() => setAdminModeActive((prev) => !prev)}
+              type="button"
+              className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full border transition cursor-pointer ${
+                adminModeActive
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30'
+                  : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:text-white'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  adminModeActive ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'
+                }`}
+              />
+              {adminModeActive ? 'Yönetici Modu: Açık' : 'Yönetici Modu: Kapalı'}
+            </button>
           )}
         </div>
 
@@ -99,7 +116,7 @@ export default function Home() {
             <ProjectCard
               key={item.id}
               project={item}
-              isAdmin={isAdmin}
+              isAdmin={isAdminUser && adminModeActive}
               onRefresh={fetchProjects}
             />
           ))}

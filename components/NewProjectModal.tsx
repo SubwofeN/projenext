@@ -61,13 +61,15 @@ export default function NewProjectModal({
         repoUrl ? `\n• Kaynak Kod: ${repoUrl}` : ''
       }${author ? `\n• Geliştirici: ${author}` : ''}${contactLine}`;
 
-      // Supabase veritabanında daha önce NOT NULL tanımlanmış tüm olası alanlar doldurularak gönderiliyor
+      // Supabase veritabanında daha önce NOT NULL tanımlanmış tüm kolonlar doldurularak gönderiliyor
       const { error } = await supabase.from('projects').insert([
         {
           title: title.trim(),
           description: formattedDescription,
           tagline: description.trim().slice(0, 150),
           abandon_reason: 'Topluluk paylaşımı / Yeni proje',
+          status: 'idea',
+          author_username: author.trim() || 'anonim',
         },
       ]);
 

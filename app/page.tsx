@@ -56,6 +56,14 @@ export default function Home() {
     setAdminModeActive(false);
   };
 
+  const handleOpenAddModal = () => {
+    if (!currentUser) {
+      window.location.href = '/auth';
+    } else {
+      setIsModalOpen(true);
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-black text-zinc-100 selection:bg-cyan-500/30 selection:text-cyan-200">
       {/* Arka Plan Glow Efektleri */}
@@ -77,19 +85,13 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Proje Ekle Butonu */}
+            {/* 1. ÜST BAR PROJE EKLE BUTONU */}
             <button
-              onClick={() => {
-                if (!currentUser) {
-                  window.location.href = '/auth';
-                } else {
-                  setIsModalOpen(true);
-                }
-              }}
+              onClick={handleOpenAddModal}
               type="button"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 hover:opacity-95 transition cursor-pointer"
+              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 hover:opacity-95 transition cursor-pointer"
             >
-              <span className="text-sm font-bold">+</span> Yeni Proje Ekle
+              <span className="text-sm font-bold leading-none">+</span> Proje Ekle
             </button>
 
             {/* Yönetici Toggle Butonu */}
@@ -108,7 +110,7 @@ export default function Home() {
                     adminModeActive ? 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]' : 'bg-zinc-600'
                   }`}
                 />
-                {adminModeActive ? 'Yönetici Modu Açık' : 'Yönetici Modu Kapalı'}
+                {adminModeActive ? 'Yönetici Modu: Açık' : 'Yönetici Modu: Kapalı'}
               </button>
             )}
 
@@ -148,9 +150,18 @@ export default function Home() {
               Burada Keşfet ve Yönet
             </span>
           </h2>
-          <p className="max-w-xl mx-auto text-sm sm:text-base text-zinc-400">
+          <p className="max-w-xl mx-auto text-sm sm:text-base text-zinc-400 mb-6">
             Açık kaynak fikirler, modern projeler ve topluluğun ürettiği tüm yenilikler tek bir merkezde.
           </p>
+
+          {/* 2. ORTA HERO PROJE EKLE BUTONU */}
+          <button
+            onClick={handleOpenAddModal}
+            type="button"
+            className="inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 px-5 py-2.5 text-sm font-semibold text-white shadow-xl backdrop-blur-md transition cursor-pointer hover:border-cyan-500/50"
+          >
+            <span className="text-cyan-400 font-bold">+</span> Yeni Proje Paylaş
+          </button>
         </section>
 
         {/* Projeler Grid Alanı */}
@@ -177,7 +188,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* PROJE OLUŞTURMA MODALI */}
       {/* PROJE OLUŞTURMA MODALI */}
       {isModalOpen && (
         <NewProjectModal

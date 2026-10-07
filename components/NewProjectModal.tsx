@@ -24,6 +24,8 @@ export default function NewProjectModal({
   const [demoUrl, setDemoUrl] = useState('');
   const [repoUrl, setRepoUrl] = useState('');
   const [author, setAuthor] = useState('');
+  const [contactType, setContactType] = useState<'discord' | 'email'>('discord');
+  const [contactValue, setContactValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -41,12 +43,24 @@ export default function NewProjectModal({
     setLoading(true);
 
     try {
-      // 1. Zengin alanları birleşik açıklama formatına dönüştürüp kaydet (kolon hatası vermez)
+      // İletişim linkini/metnini biçimlendir
+      let contactLine = '';
+      if (contactValue.trim()) {
+        if (contactType === 'discord') {
+          const formattedDiscord = contactValue.startsWith('http')
+            ? contactValue.trim()
+            : `https://discord.com/users/${contactValue.trim()}`;
+          contactLine = `\n• Discord: ${formattedDiscord}`;
+        } else {
+          contactLine = `\n• E-posta: ${contactValue.trim()}`;
+        }
+      }
+
       const formattedDescription = `${description.trim()}\n\n• Kategori: ${category}\n• Aranan Destek: ${
         selectedNeeds.length > 0 ? selectedNeeds.join(', ') : 'Belirtilmedi'
       }${demoUrl ? `\n• Canlı Demo: ${demoUrl}` : ''}${
         repoUrl ? `\n• Kaynak Kod: ${repoUrl}` : ''
-      }${author ? `\n• Geliştirici: ${author}` : ''}`;
+      }${author ? `\n• Geliştirici: ${author}` : ''}${contactLine}`;
 
       const { error } = await supabase.from('projects').insert([
         {
@@ -106,7 +120,7 @@ export default function NewProjectModal({
             />
           </div>
 
-          {/* 1. YENİ SEÇENEK: Kategori Seçimi */}
+          {/* Kategori Seçimi */}
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">
               Proje Kategorisi
@@ -144,10 +158,10 @@ export default function NewProjectModal({
             />
           </div>
 
-          {/* 2. YENİ SEÇENEK: İhtiyaç / Aranan Destek */}
+          {/* Aranan Destek */}
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-              Topluluktan Ne Arıyorsun? (Çoklu Seçilebilir)
+              Topluluktan Ne Arıyorsun?
             </label>
             <div className="flex flex-wrap gap-1.5">
               {NEEDS.map((need) => {
@@ -171,24 +185,68 @@ export default function NewProjectModal({
             </div>
           </div>
 
-          {/* 3. YENİ SEÇENEK: Bağlantılar (Demo ve Repo) */}
+          {/* İletişim Bilgisi (Discord veya E-posta) */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-zinc-400">
+                İletişim Kanalı (Opsiyonel)
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setContactType('discord')}
+                  className={`text-[11px] px-2 py-0.5 rounded-md transition cursor-pointer ${
+                    contactType === 'discord'
+                      ? 'bg-[#5865F2]/20 text-[#5865F2] font-semibold border border-[#5865F2]/40'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  Discord
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContactType('email')}
+                  className={`text-[11px] px-2 py-0.5 rounded-md transition cursor-pointer ${
+                    contactType === 'email'
+                      ? 'bg-cyan-500/20 text-cyan-400 font-semibold border border-cyan-500/40'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  E-posta
+                </button>
+              </div>
+            </div>
+            <input
+              type={contactType === 'email' ? 'email' : 'text'}
+              value={contactValue}
+              onChange={(e) => setContactValue(e.target.value)}
+              placeholder={
+                contactType === 'discord'
+                  ? 'Discord Davet Linki (https://discord.gg/...) veya ID'
+                  : 'ornek@domain.com'
+              }
+              className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition"
+            />
+          </div>
+
+          {/* Bağlantılar (Demo ve Repo) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                Canlı Demo / Web Sitesi
+                Canlı Demo (Opsiyonel)
               </label>
               <input
                 type="url"
                 value={demoUrl}
                 onChange={(e) => setDemoUrl(e.target.value)}
-                placeholder="https://projenext.online"
+                placeholder="https://..."
                 className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition"
               />
             </div>
 
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                GitHub / Repo Linki
+                GitHub / Repo (Opsiyonel)
               </label>
               <input
                 type="url"

@@ -1,118 +1,132 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
+import ProjectCard from '@/components/ProjectCard';
+import Link from 'next/link';
 
-export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+const ADMIN_EMAIL = 'yilmaznecati728@gmail.com';
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage('');
-    setLoading(true);
+export default function Home() {
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [adminModeActive, setAdminModeActive] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-    if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+  const fetchProjects = async () => {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('id', { ascending: false });
 
-      if (error) {
-        setMessage('Giriş hatası: ' + error.message);
-      } else {
-        setMessage('Giriş başarılı! Ana sayfaya yönlendiriliyorsunuz...');
-        router.push('/');
-        router.refresh();
-      }
-    } else {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        setMessage('Kayıt hatası: ' + error.message);
-      } else {
-        setMessage('Kayıt başarılı! Şimdi giriş yapabilirsiniz.');
-        setIsLogin(true);
-      }
+    if (!error && data) {
+      setProjects(data);
     }
-    setLoading(false);
+  };
+
+  useEffect(() => {
+    async function init() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      setCurrentUser(user);
+
+      if (
+        user?.email &&
+        user.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim()
+      ) {
+        setIsAdminUser(true);
+      }
+
+      await fetchProjects();
+      setLoading(false);
+    }
+
+    init();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setCurrentUser(null);
+    setIsAdminUser(false);
+    setAdminModeActive(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-950 text-white">
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-8 shadow-xl">
-        <h2 className="text-2xl font-bold mb-6 text-center">
-          {isLogin ? 'Giriş Yap' : 'Kayıt Ol'}
-        </h2>
-
-        <form onSubmit={handleAuth} className="space-y-4">
-          <div>
-            <label className="block text-sm text-zinc-400 mb-1">E-posta</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 text-white"
-              placeholder="ornek@domain.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-zinc-400 mb-1">Şifre</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-blue-500 text-white"
-              placeholder="En az 6 karakter"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 font-semibold rounded-lg transition disabled:opacity-50"
-          >
-            {loading ? 'İşleniyor...' : isLogin ? 'Giriş Yap' : 'Kayıt Ol'}
-          </button>
-        </form>
-
-        {message && (
-          <p
-            className={`mt-4 text-center text-sm ${
-              message.includes('başarılı') ? 'text-emerald-400' : 'text-red-400'
-            }`}
-          >
-            {message}
-          </p>
-        )}
-
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setMessage('');
-            }}
-            className="text-sm text-zinc-400 hover:text-white transition"
-          >
-            {isLogin
-              ? 'Hesabınız yok mu? Kayıt Olun'
-              : 'Zaten hesabınız var mı? Giriş Yapın'}
-          </button>
+    <main className="min-h-screen bg-black text-white p-6 sm:p-12 max-w-6xl mx-auto">
+      {/* ÜST BAR */}
+      <header className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-8 border-b border-zinc-800 mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">ProjeNext</h1>
+          {isAdminUser && (
+            <p className="text-xs text-zinc-400 mt-1">
+              Admin yetkisi tanımlı
+            </p>
+          )}
         </div>
-      </div>
-    </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* SADECE ADMIN İÇİN AÇ/KAPA DÜĞMESİ */}
+          {isAdminUser && (
+            <button
+              onClick={() => setAdminModeActive((prev) => !prev)}
+              type="button"
+              className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
+                adminModeActive
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30'
+                  : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:text-white'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  adminModeActive ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'
+                }`}
+              />
+              {adminModeActive ? 'Yönetici Modu: Açık' : 'Yönetici Modu: Kapalı'}
+            </button>
+          )}
+
+          {currentUser ? (
+            <>
+              <span className="text-xs text-zinc-400 hidden sm:inline">
+                {currentUser.email}
+              </span>
+              <button
+                onClick={handleLogout}
+                type="button"
+                className="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-zinc-300 transition"
+              >
+                Çıkış Yap
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/auth"
+              className="text-sm bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition"
+            >
+              Giriş / Kayıt Ol
+            </Link>
+          )}
+        </div>
+      </header>
+
+      {/* PROJELER LİSTESİ */}
+      {loading ? (
+        <p className="text-zinc-500">Yükleniyor...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projects.map((item) => (
+            <ProjectCard
+              key={item.id}
+              project={item}
+              isAdmin={isAdminUser && adminModeActive}
+              onRefresh={fetchProjects}
+            />
+          ))}
+        </div>
+      )}
+    </main>
   );
 }

@@ -43,7 +43,6 @@ export default function NewProjectModal({
     setLoading(true);
 
     try {
-      // İletişim linkini/metnini biçimlendir
       let contactLine = '';
       if (contactValue.trim()) {
         if (contactType === 'discord') {
@@ -62,12 +61,13 @@ export default function NewProjectModal({
         repoUrl ? `\n• Kaynak Kod: ${repoUrl}` : ''
       }${author ? `\n• Geliştirici: ${author}` : ''}${contactLine}`;
 
-      // tagline hatasını çözmek için açıklamadan kısa bir özet tagline olarak da gönderiliyor
+      // Supabase veritabanında daha önce NOT NULL tanımlanmış tüm olası alanlar doldurularak gönderiliyor
       const { error } = await supabase.from('projects').insert([
         {
           title: title.trim(),
           description: formattedDescription,
           tagline: description.trim().slice(0, 150),
+          abandon_reason: 'Topluluk paylaşımı / Yeni proje',
         },
       ]);
 

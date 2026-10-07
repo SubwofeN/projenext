@@ -16,33 +16,61 @@ export default function NewProjectModal({
 }: NewProjectModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<'idea' | 'design' | 'code'>('idea');
+  const [reason, setReason] = useState('');
+  const [techStack, setTechStack] = useState('');
+  const [author, setAuthor] = useState('');
+  const [repoUrl, setRepoUrl] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage('');
+    setErrorMsg('');
     setLoading(true);
 
     try {
+      // Veritabanı tablosundaki kolonlara göre ekleme
       const { error } = await supabase.from('projects').insert([
         {
           title: title.trim(),
           description: description.trim(),
+          // Eğer projeler tablon bu kolonları destekliyorsa gönderir:
+          ...(reason && { reason: reason.trim() }),
+          ...(techStack && { tech_stack: techStack.trim() }),
+          ...(author && { author: author.trim() }),
+          ...(repoUrl && { repo_url: repoUrl.trim() }),
+          ...(status && { status }),
         },
       ]);
 
       if (error) {
-        setErrorMessage(error.message);
-      } else {
-        setTitle('');
-        setDescription('');
-        onProjectAdded();
+        // Kolon hatası verirse sade başlık-açıklama ile fallback yapalım
+        if (error.message.includes('column')) {
+          const combinedDesc = `${description}\n\n• Durum: ${
+            status === 'idea' ? 'Sadece Fikir' : status === 'design' ? 'Tasarım Var' : 'Kod/Repo Açık'
+          }${reason ? `\n• Neden Devrediliyor: ${reason}` : ''}${
+            techStack ? `\n• Teknolojiler: ${techStack}` : ''
+          }${author ? `\n• Ekleyen: ${author}` : ''}${repoUrl ? `\n• Link: ${repoUrl}` : ''}`;
+
+          const { error: retryError } = await supabase.from('projects').insert([
+            {
+              title: title.trim(),
+              description: combinedDesc,
+            },
+          ]);
+
+          if (retryError) throw retryError;
+        } else {
+          throw error;
+        }
       }
+
+      onProjectAdded();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Proje eklenirken bir hata meydana geldi.');
+      setErrorMsg(err.message || 'Proje eklenirken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
@@ -50,22 +78,18 @@ export default function NewProjectModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      {/* Modal Kutusu */}
-      <div className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-zinc-900/90 p-6 sm:p-8 shadow-2xl backdrop-blur-2xl">
-        {/* Üst Başlık ve Kapat Butonu */}
-        <div className="flex items-center justify-between pb-4 mb-5 border-b border-white/10">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center font-bold text-black text-xs shadow-md shadow-cyan-500/20">
-              +
+      <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950/90 p-6 sm:p-8 shadow-2xl backdrop-blur-2xl scrollbar-thin scrollbar-thumb-zinc-800">
+        
+        {/* Üst Başlık & Rozet */}
+        <div className="flex items-start justify-between pb-4 mb-5 border-b border-white/10">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[11px] font-semibold text-cyan-400 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              Fikrini veya Projeni Topluluğa Devret
             </div>
-            <div>
-              <h3 className="text-lg font-bold tracking-tight text-white">
-                Yeni Proje Oluştur
-              </h3>
-              <p className="text-[11px] text-zinc-400">
-                Topluluğun görmesi için projenizi detaylandırın.
-              </p>
-            </div>
+            <h3 className="text-2xl font-black tracking-tight text-white">
+              Yeni Proje Bırak
+            </h3>
           </div>
 
           <button
@@ -77,44 +101,143 @@ export default function NewProjectModal({
           </button>
         </div>
 
-        {/* Form Alanı */}
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-              Proje Başlığı
+              Proje Adı <span className="text-cyan-400">*</span>
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              placeholder="Örn: AI Destekli Kod Asistanı"
-              className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition"
+              placeholder="Örn: ProjeNext, DevLog..."
+              className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition"
             />
           </div>
 
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-              Proje Açıklaması / Detayları
+              Tek Cümlelik Özet <span className="text-cyan-400">*</span>
             </label>
-            <textarea
-              rows={4}
+            <input
+              type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
-              placeholder="Projenin amacı, kullanılan teknolojiler ve hedefler..."
-              className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition resize-none"
+              placeholder="Örn: Yazılımcılar için masaüstü not alma aracı."
+              className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition"
             />
           </div>
 
-          {errorMessage && (
+          {/* Durum Seçimi */}
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+              Proje Durumu
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setStatus('idea')}
+                className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  status === 'idea'
+                    ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300 shadow-sm shadow-cyan-500/30'
+                    : 'bg-zinc-900/60 border-white/10 text-zinc-400 hover:text-white'
+                }`}
+              >
+                💡 Sadece Fikir
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatus('design')}
+                className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  status === 'design'
+                    ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300 shadow-sm shadow-cyan-500/30'
+                    : 'bg-zinc-900/60 border-white/10 text-zinc-400 hover:text-white'
+                }`}
+              >
+                🎨 Tasarım Var
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatus('code')}
+                className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                  status === 'code'
+                    ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300 shadow-sm shadow-cyan-500/30'
+                    : 'bg-zinc-900/60 border-white/10 text-zinc-400 hover:text-white'
+                }`}
+              >
+                ⚡ Kod / Repo Açık
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+              Neden Devrediyorsun / Neden Durdu?
+            </label>
+            <textarea
+              rows={3}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Örn: Zaman ayıramadım, backend tarafı karmaşık geldi..."
+              className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+              Teknolojiler (Virgülle ayır)
+            </label>
+            <input
+              type="text"
+              value={techStack}
+              onChange={(e) => setTechStack(e.target.value)}
+              placeholder="Next.js, Tailwind, Supabase..."
+              className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                Kullanıcı Adı <span className="text-cyan-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+                required
+                placeholder="Örn: necati"
+                className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                Repo / Link (Opsiyonel)
+              </label>
+              <input
+                type="url"
+                value={repoUrl}
+                onChange={(e) => setRepoUrl(e.target.value)}
+                placeholder="https://github.com/..."
+                className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition"
+              />
+            </div>
+          </div>
+
+          {errorMsg && (
             <div className="p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 text-xs">
-              {errorMessage}
+              {errorMsg}
             </div>
           )}
 
-          {/* Alt Butonlar */}
-          <div className="flex items-center justify-end gap-3 pt-3">
+          {/* Aksiyon Butonları */}
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
             <button
               type="button"
               onClick={onClose}
@@ -133,7 +256,7 @@ export default function NewProjectModal({
                   Yayınlanıyor...
                 </span>
               ) : (
-                'Projeyi Yayınla'
+                '✦ Panoya Bırak'
               )}
             </button>
           </div>

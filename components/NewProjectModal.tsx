@@ -62,10 +62,12 @@ export default function NewProjectModal({
         repoUrl ? `\n• Kaynak Kod: ${repoUrl}` : ''
       }${author ? `\n• Geliştirici: ${author}` : ''}${contactLine}`;
 
+      // tagline hatasını çözmek için açıklamadan kısa bir özet tagline olarak da gönderiliyor
       const { error } = await supabase.from('projects').insert([
         {
           title: title.trim(),
           description: formattedDescription,
+          tagline: description.trim().slice(0, 150),
         },
       ]);
 

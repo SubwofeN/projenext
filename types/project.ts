@@ -10,6 +10,7 @@ export interface Project {
   status: ProjectStatus;
   respect_count: number;
   repo_url?: string | null;
+  contact?: string | null;
   created_at?: string;
   author_username: string;
 }

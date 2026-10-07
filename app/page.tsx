@@ -5,8 +5,7 @@ import { supabase } from '@/lib/supabase';
 import ProjectCard from '@/components/ProjectCard';
 import Link from 'next/link';
 
-// SADECE SENİN E-POSTAN (Admin yetkisi için)
-const ADMIN_EMAIL = 'senin-epostan@gmail.com';
+const ADMIN_EMAIL = 'yilmaznecati728@gmail.com';
 
 export default function Home() {
   const [projects, setProjects] = useState<any[]>([]);
@@ -14,7 +13,6 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Projeleri Çekme Fonksiyonu
   const fetchProjects = async () => {
     const { data, error } = await supabase
       .from('projects')
@@ -28,14 +26,19 @@ export default function Home() {
 
   useEffect(() => {
     async function init() {
-      // 1. Giriş yapmış kullanıcıyı kontrol et
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       setCurrentUser(user);
-      if (user && user.email === ADMIN_EMAIL) {
+
+      if (
+        user?.email &&
+        user.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase().trim()
+      ) {
         setIsAdmin(true);
       }
 
-      // 2. Projeleri getir
       await fetchProjects();
       setLoading(false);
     }
@@ -50,13 +53,13 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white p-6 sm:p-12 max-w-6xl mx-auto">
-      {/* ÜST MENÜ / NAVBAR */}
+    <main className="min-h-screen bg-black text-white p-6 sm:p-12 max-w-6xl mx-auto">
+      {/* ÜST BAR */}
       <header className="flex justify-between items-center pb-8 border-b border-zinc-800 mb-8">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">ProjeNext</h1>
           {isAdmin && (
-            <span className="inline-block mt-1 text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">
+            <span className="inline-block mt-2 text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-medium">
               Admin Modu Aktif
             </span>
           )}
@@ -65,9 +68,12 @@ export default function Home() {
         <div className="flex items-center gap-3">
           {currentUser ? (
             <>
-              <span className="text-xs text-zinc-400 hidden sm:inline">{currentUser.email}</span>
+              <span className="text-xs text-zinc-400 hidden sm:inline">
+                {currentUser.email}
+              </span>
               <button
                 onClick={handleLogout}
+                type="button"
                 className="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg text-zinc-300 transition"
               >
                 Çıkış Yap

@@ -22,7 +22,6 @@ export default function ProjectCard({ project, isAdmin, onRefresh }: ProjectCard
   const [editDesc, setEditDesc] = useState(project.description);
   const [loading, setLoading] = useState(false);
 
-  // 1. Projeyi Silme (Çarpı butonu)
   const handleDelete = async () => {
     const confirmDelete = window.confirm(`"${project.title}" projesini silmek istediğinize emin misiniz?`);
     if (!confirmDelete) return;
@@ -36,12 +35,11 @@ export default function ProjectCard({ project, isAdmin, onRefresh }: ProjectCard
     if (error) {
       alert('Silinirken hata oluştu: ' + error.message);
     } else {
-      onRefresh(); // Listeyi anında yenile
+      onRefresh();
     }
     setLoading(false);
   };
 
-  // 2. Projeyi Güncelleme/Düzeltme
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -58,19 +56,19 @@ export default function ProjectCard({ project, isAdmin, onRefresh }: ProjectCard
       alert('Güncelleme hatası: ' + error.message);
     } else {
       setIsEditing(false);
-      onRefresh(); // Değişikliği anında yansıt
+      onRefresh();
     }
     setLoading(false);
   };
 
   return (
     <div className="relative bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow transition hover:border-zinc-700">
-      {/* SADECE ADMIN GÖREBİLİR: Çarpı (Sil) ve Düzenle Butonları */}
       {isAdmin && (
         <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
           <button
             onClick={() => setIsEditing(true)}
             title="Projeyi Düzenle"
+            type="button"
             className="w-7 h-7 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-300 hover:bg-blue-600 hover:text-white transition text-xs"
           >
             ✎
@@ -79,6 +77,7 @@ export default function ProjectCard({ project, isAdmin, onRefresh }: ProjectCard
             onClick={handleDelete}
             disabled={loading}
             title="Projeyi Sil"
+            type="button"
             className="w-7 h-7 flex items-center justify-center rounded-full bg-zinc-800 text-red-400 hover:bg-red-600 hover:text-white transition font-bold text-xs"
           >
             ✕
@@ -86,20 +85,19 @@ export default function ProjectCard({ project, isAdmin, onRefresh }: ProjectCard
         </div>
       )}
 
-      {/* Kart İçeriği */}
       <h3 className="text-xl font-semibold text-white pr-16">{project.title}</h3>
       <p className="mt-2 text-zinc-400 text-sm leading-relaxed whitespace-pre-line">
         {project.description}
       </p>
 
-      {/* ADMIN DÜZENLEME MODALI */}
       {isEditing && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-zinc-900 border border-zinc-800 w-full max-w-lg rounded-xl p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-lg font-bold text-white">Projeyi Düzenle</h4>
               <button
                 onClick={() => setIsEditing(false)}
+                type="button"
                 className="text-zinc-400 hover:text-white font-bold"
               >
                 ✕
